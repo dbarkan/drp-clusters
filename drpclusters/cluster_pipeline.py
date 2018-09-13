@@ -1,4 +1,5 @@
 from operator import itemgetter
+from Bio import PDB
 import time
 import re
 import subprocess

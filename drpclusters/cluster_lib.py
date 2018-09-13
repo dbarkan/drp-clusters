@@ -636,7 +636,7 @@ class DrpCluster(Cluster):
         import modeller
         from modeller import scripts
 
-        import salignTools
+        import salign_tools
         env = environ()
         env.io.atom_files_directory = [pdbDirectory]
         aln = alignment(env)
@@ -650,7 +650,7 @@ class DrpCluster(Cluster):
         saveStdout = sys.stdout
         sys.stdout = open(os.devnull, "w")
         
-        salignTools.myIterativeStructuralAlign(aln, True) #keeping writeFit as True for now to avoid odd SALIGN error
+        salign_tools.myIterativeStructuralAlign(aln, True) #keeping writeFit as True for now to avoid odd SALIGN error
         sys.stdout = saveStdout
 
         alignmentFastaFile = os.path.join(pdbDirectory, "%s_alignment.fasta" % self.getClusterIndex())
@@ -721,7 +721,7 @@ class SingletonProcessor:
         
         if (refDrp is not None):
             bestDistance = self.distanceMatrix.getDistance(targetDrp.drpCode, refDrp.drpCode)
-            print test
+
             singletonTuple = SingletonTuple(targetDrp.drpCode, refDrp.drpCode, bestDistance, self.getSingletonTypeString())
             targetDrp.setSingletonTuple(singletonTuple)
 
