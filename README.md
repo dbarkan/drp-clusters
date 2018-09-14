@@ -43,7 +43,7 @@ Most of these steps require using libraries from MODELLER. An exception is step 
 todo -- decide whether to number each step
 xyz -- clean this up -- move below?
 
-### Compile pipeline input
+### 1. Compile pipeline input
 
 #### DRP file
 Create a file with a list of DRPs, one per line. Each DRP should be represented by its PDB ID and
@@ -65,23 +65,23 @@ todo - optimal column width?
 todo - 'an example file is provided'?
 todo - check 1koz case sensitive. Also syntax highlighting
 
-### Finalize PDB input
+### 2. Finalize PDB input
 Run the setup_pdb.py script to extract the coordinates of the DRP chains in each PDB entry and write them out as a separate PDB file.
 
-### Align DRP PDB files
+### 3. Align DRP PDB files
 The protocol creates pairwise distances matrices using two methods, Native Overlap and Equivalent Disulfides. These matrices must be prepared prior to running the full pipeline. These are ideally prepared on a distributed compute cluster as the computation time scales exponentially, but if there is a tractable number of DRPs, it's possible to use a single CPU  (for reference, 100 DRPs takes xyz on a xyz system). Scripts for both methods are described.
 
 #### Single processor
 
 #### Distributed system
 
-### Finalize Distance Matrices
+### 4. Finalize Distance Matrices
 
-### Run Cluster Pipeline
+### 5. Run Cluster Pipeline
 
-### Create Visualization Sessions
+### 6. Create Visualization Sessions
 
-### Cluster Text annotation (coming soon)
+### 7. Cluster Text annotation (coming soon)
 
 
 ## Example pipeline
