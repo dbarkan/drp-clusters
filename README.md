@@ -35,11 +35,13 @@ If you install drpclusters elsewhere, it can be imported by your Conda installat
 
 
 ## Running the drpclusters pipeline
+### Overview
+Below is a step-by-step guide to running the full pipeline start to finish. The drp-clusters package includes an example set of 100 DRP PDB files for demonstration and testing purposes. Each step below includes the commands to apply the pipeline to this example set of DRPs. 
 
-todo -- maybe make overview that explains the example start to finish; can also have steps here that
-say 'skip to step #x if you dont' ahve modeller'
+Most of these steps require using libraries from MODELLER. An exception is step xyz, which runs the actual clustering pipeline. If you don't have access to MODELLER but want to demo the pipeline, example distance matrix files are also provided. 
 
 todo -- decide whether to number each step
+xyz -- clean this up -- move below?
 
 ### Compile pipeline input
 
@@ -56,6 +58,7 @@ todo: probably better formatting
 
 2. Alternatively, you can store the PDB entries for all DRPs in your input file in a single directory. They must be named with their standard PDB identifier (xyz case-insensitive?) (i.e. 1koz.pdb).
 
+
 todo -- unzip example if they want
 
 todo - optimal column width?
@@ -66,14 +69,33 @@ todo - check 1koz case sensitive. Also syntax highlighting
 Run the setup_pdb.py script to extract the coordinates of the DRP chains in each PDB entry and write them out as a separate PDB file.
 
 ### Align DRP PDB files
-The 
+The protocol creates pairwise distances matrices using two methods, Native Overlap and Equivalent Disulfides. These matrices must be prepared prior to running the full pipeline. These are ideally prepared on a distributed compute cluster as the computation time scales exponentially, but if there is a tractable number of DRPs, it's possible to use a single CPU  (for reference, 100 DRPs takes xyz on a xyz system). Scripts for both methods are described.
 
-4. Align PDBs with different methods
-5. Grep results into specific files.
-6. cluster pipeline
-7. cluster text annotation
-   - will need extra files
-8. cluster vis annotation
+#### Single processor
+
+#### Distributed system
+
+### Finalize Distance Matrices
+
+### Run Cluster Pipeline
+
+### Create Visualization Sessions
+
+### Cluster Text annotation (coming soon)
+
+
+## Example pipeline
+In this example, all steps are run in the `drp-clusters/example/` directory, which comes with the input files described in step 1 (using the two-letter PDB directory structure convention).
+
+Many commands are executed with `condapython`; this means they should be run with the python executable that comes with your conda distribution and includes MODELLER libraries. (Here, `condapython` is my alias to that executable).
+
+
+```
+cd drp-clusters/example/
+tar -xzf dividedPdb.tar.gz
+condapython drp-clusters/drpclusters/setup_pdb.py  -q drpList.txt -p dividedPdbDir/
+```
+
 
 
 
