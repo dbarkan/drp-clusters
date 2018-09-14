@@ -40,8 +40,9 @@ Below is a step-by-step guide to running the full pipeline start to finish. The 
 
 Most of these steps require using libraries from MODELLER. An exception is step xyz, which runs the actual clustering pipeline. If you don't have access to MODELLER but want to demo the pipeline, example distance matrix files are also provided. 
 
-todo -- decide whether to number each step
-xyz -- clean this up -- move below?
+In this example, all steps are run in the `drp-clusters/example/` directory, which comes with the input files described in step 1 (using the two-letter PDB directory structure convention).
+
+Many commands are executed with `condapython`; this means they should be run with the python executable that comes with your conda distribution and includes MODELLER libraries. (Here, `condapython` is my alias to that executable).
 
 ### 1. Compile pipeline input
 
@@ -58,20 +59,32 @@ todo: probably better formatting
 
 2. Alternatively, you can store the PDB entries for all DRPs in your input file in a single directory. They must be named with their standard PDB identifier (xyz case-insensitive?) (i.e. 1koz.pdb).
 
+*Example*
+No step is run here, but the PDB files need to be unpacked:
 
-todo -- unzip example if they want
+```
+tar -xzf dividedPdb.tar.gz
+```
+
 
 todo - optimal column width?
-todo - 'an example file is provided'?
 todo - check 1koz case sensitive. Also syntax highlighting
 
 ### 2. Finalize PDB input
 Run the setup_pdb.py script to extract the coordinates of the DRP chains in each PDB entry and write them out as a separate PDB file.
 
+*Example*
+
+```
+condapython drp-clusters/drpclusters/setup_pdb.py  -q drpList.txt -p dividedPdbDir/
+```
+todo -- output dir too
+
 ### 3. Align DRP PDB files
 The protocol creates pairwise distances matrices using two methods, Native Overlap and Equivalent Disulfides. These matrices must be prepared prior to running the full pipeline. These are ideally prepared on a distributed compute cluster as the computation time scales exponentially, but if there is a tractable number of DRPs, it's possible to use a single CPU  (for reference, 100 DRPs takes xyz on a xyz system). Scripts for both methods are described.
 
 #### Single processor
+
 
 #### Distributed system
 
@@ -85,16 +98,8 @@ The protocol creates pairwise distances matrices using two methods, Native Overl
 
 
 ## Example pipeline
-In this example, all steps are run in the `drp-clusters/example/` directory, which comes with the input files described in step 1 (using the two-letter PDB directory structure convention).
-
-Many commands are executed with `condapython`; this means they should be run with the python executable that comes with your conda distribution and includes MODELLER libraries. (Here, `condapython` is my alias to that executable).
 
 
-```
-cd drp-clusters/example/
-tar -xzf dividedPdb.tar.gz
-condapython drp-clusters/drpclusters/setup_pdb.py  -q drpList.txt -p dividedPdbDir/
-```
 
 
 
