@@ -39,20 +39,35 @@ If you install drpclusters elsewhere, it can be imported by your Conda installat
 todo -- maybe make overview that explains the example start to finish; can also have steps here that
 say 'skip to step #x if you dont' ahve modeller'
 
-### initial query -- give me all chains with DRP requirements, create file
+todo -- decide whether to number each step
 
-1. Create a file with a list of DRPs, one per line. Each DRP should be represented by its PDB ID and
+### Compile pipeline input
+
+#### DRP file
+Create a file with a list of DRPs, one per line. Each DRP should be represented by its PDB ID and
 the chain in the PDB entry associated with the DRP. For example, for the DRP omega-grammotoxin SIA,
-which is Chain A in PDB 1KOZ, add the line '1kozA'. 
+which is Chain A in PDB 1KOZ, add the line '1kozA' (no quotes).
 
+#### PDB files
+You will need local access to the PDB coordinate files that are listed in the DRP file. This can be structured in one of two ways:
+
+todo: probably better formatting
+1. Mirrored copy of the PDB - many institutions have a local mirrored copy of the PDB, using the [middle two character directory format](https://www.rcsb.org/pages/download/ftp). If all entries in the DRP list are accounted for here, you're good to go.
+
+2. Alternatively, you can store the PDB entries for all DRPs in your input file in a single directory. They must be named with their standard PDB identifier (xyz case-insensitive?) (i.e. 1koz.pdb).
+
+todo -- unzip example if they want
+
+todo - optimal column width?
 todo - 'an example file is provided'?
 todo - check 1koz case sensitive. Also syntax highlighting
 
-2. for each, download PDB file into divided PDB dir -- OR just have one big dir with all PDBs
-   - How about we don't provide that -- they can have a server or something. but in the example, it
-     can be provided. Maybe.
+### Finalize PDB input
+Run the setup_pdb.py script to extract the coordinates of the DRP chains in each PDB entry and write them out as a separate PDB file.
 
-3. copy those into local PDB dir -- creates single chain files
+### Align DRP PDB files
+The 
+
 4. Align PDBs with different methods
 5. Grep results into specific files.
 6. cluster pipeline
