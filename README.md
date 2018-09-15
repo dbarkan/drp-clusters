@@ -59,7 +59,7 @@ todo: probably better formatting
 
 2. Alternatively, you can store the PDB entries for all DRPs in your input file in a single directory. They must be named with their standard PDB identifier (xyz case-insensitive?) (i.e. 1koz.pdb).
 
-*Example*
+#### Example
 No step is run here, but the PDB files need to be unpacked:
 
 ```
@@ -73,7 +73,7 @@ todo - check 1koz case sensitive. Also syntax highlighting
 ### 2. Finalize PDB input
 Run the setup_pdb.py script to extract the coordinates of the DRP chains in each PDB entry and write them out as a separate PDB file.
 
-*Example*
+#### Example
 
 ```
 condapython drp-clusters/drpclusters/setup_pdb.py  -q drpList.txt -p dividedPdbDir/
@@ -83,10 +83,13 @@ todo -- output dir too
 ### 3. Align DRP PDB files
 The protocol creates pairwise distances matrices using two methods, Native Overlap and Equivalent Disulfides. These matrices must be prepared prior to running the full pipeline. These are ideally prepared on a distributed compute cluster as the computation time scales exponentially, but if there is a tractable number of DRPs, it's possible to use a single CPU  (for reference, 100 DRPs takes xyz on a xyz system). Scripts for both methods are described.
 
-#### Single processor
+#### Example: Single processor
+```
+minipython condapython drp-clusters/drpclusters/pairwise_align.py  -q drpList.txt -p drpPdb -o pairwise.txt -m full_drp
+minipython condapython drp-clusters/drpclusters/pairwise_align.py  -q drpList.txt -p drpPdb -o disulfides.txt -m disulfides
+```
 
-
-#### Distributed system
+#### Example: Distributed system
 
 ### 4. Finalize Distance Matrices
 
