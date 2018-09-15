@@ -84,23 +84,46 @@ todo -- output dir too
 The protocol creates pairwise distances matrices using two methods, Native Overlap and Equivalent Disulfides. These matrices must be prepared prior to running the full pipeline. These are ideally prepared on a distributed compute cluster as the computation time scales exponentially, but if there is a tractable number of DRPs, it's possible to use a single CPU  (for reference, 100 DRPs takes xyz on a xyz system). Scripts for both methods are described.
 
 #### Example: Single processor
+*This method iterates through all pairs of DRPs in `drpList.txt` and appends results to the `pairwise.txt` file*
 ```
-minipython condapython drp-clusters/drpclusters/pairwise_align.py  -q drpList.txt -p drpPdb -o pairwise.txt -m full_drp
-minipython condapython drp-clusters/drpclusters/pairwise_align.py  -q drpList.txt -p drpPdb -o disulfides.txt -m disulfides
+condapython drp-clusters/drpclusters/pairwise_align.py  -q drpList.txt -p drpPdb -o pairwise.txt -m full_drp
+condapython drp-clusters/drpclusters/pairwise_align.py  -q drpList.txt -p drpPdb -o disulfides.txt -m disulfides
+grep longer_fraction pairwise.txt > longerFraction.txt
+grep longer_sequence_product pairwise.txt > similarityProduct.txt
+grep shorter_fraction pairwise.txt > shorterFraction.txt
 ```
+
+todo -- decide whether to grep these into 'distances' dir
 
 #### Example: Distributed system
+*Alternatively, this method explicitly runs one command for each pair of DRPs. Each pair gets its own output file. To keep things clean, all output is stored in subdirectories. Since each pair of DRPs is processed with a single command, it can be run quickly on a cluster, in accordance with your cluster environment. These example commands only show all-vs-all commands for three DRPs; enumerating across all 100 pairs is left as an exercise to the user*
 
-### 4. Finalize Distance Matrices
+```
+mkdir nativeOverlapWork
+mkdir disulfideWork
+condapython drp-clusters/drpclusters/align_native_overlap.py -f 1b45A -s 1dfnA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
+condapython drp-clusters/drpclusters/align_native_overlap.py -f 1b45A -s 1hjeA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
+condapython drp-clusters/drpclusters/align_native_overlap.py -f 1dfnA -s 1hjeA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
+condapython drp-clusters/drpclusters/align_native_overlap.py -f 1b45A -s 1dfnA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
+condapython drp-clusters/drpclusters/align_native_overlap.py -f 1b45A -s 1hjeA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
+condapython drp-clusters/drpclusters/align_native_overlap.py -f 1dfnA -s 1hjeA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
+```
 
-### 5. Run Cluster Pipeline
+*After all individual pairwise distance files have been generated, merge them into a final set of files with the following:*
+```
+grep longer_fraction nativeOverlapWork/*_no.txt > longerFraction.txt
+grep longer_sequence_product nativeOverlapWork/*_no.txt > similarityProduct.txt
+grep shorter_fraction nativeOverlapWork/*_no.txt > shorterFraction.txt
+```
+todo -- decide whether to grep these into 'distances' dir 
 
-### 6. Create Visualization Sessions
+### 4. Run Cluster Pipeline
 
-### 7. Cluster Text annotation (coming soon)
+### 5. Create Visualization Sessions
+
+### 6. Cluster Text annotation (coming soon)
 
 
-## Example pipeline
 
 
 
