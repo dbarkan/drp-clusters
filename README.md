@@ -59,6 +59,9 @@ todo: probably better formatting
 
 2. Alternatively, you can store the PDB entries for all DRPs in your input file in a single directory. They must be named with their standard PDB identifier (xyz case-insensitive?) (i.e. 1koz.pdb).
 
+#### SCOP family file
+A mapping of PDB chains to SCOP assignment (xyz verify) is also provided (`allScopFamilies.txt`). This file is current as of xyz and any updates are availabe as of xyz.
+
 #### Example
 No step is run here, but the PDB files need to be unpacked:
 
@@ -71,14 +74,14 @@ todo - optimal column width?
 todo - check 1koz case sensitive. Also syntax highlighting
 
 ### 2. Finalize PDB input
-Run the setup_pdb.py script to extract the coordinates of the DRP chains in each PDB entry and write them out as a separate PDB file.
-
+Run the setup_pdb.py script to extract the coordinates of the DRP chains in each PDB entry and write them out as a separate PDB file. This step also writes out a file mapping DRPs to their sequence lengths, which is needed in step xyz. (`drp_lengths.txt`).
+ 
 #### Example
 
 ```
 condapython drp-clusters/drpclusters/setup_pdb.py  -q drpList.txt -p dividedPdbDir/
 ```
-todo -- output dir too
+todo -- output dir too and drp_lengths.txt param
 
 ### 3. Align DRP PDB files
 The protocol creates pairwise distances matrices using two methods, Native Overlap and Equivalent Disulfides. These matrices must be prepared prior to running the full pipeline. These are ideally prepared on a distributed compute cluster as the computation time scales exponentially, but if there is a tractable number of DRPs, it's possible to use a single CPU  (for reference, 100 DRPs takes xyz on a xyz system). Scripts for both methods are described.
@@ -118,8 +121,39 @@ grep shorter_fraction nativeOverlapWork/*_no.txt > shorterFraction.txt
 todo -- decide whether to grep these into 'distances' dir 
 
 ### 4. Run Cluster Pipeline
+The cluster pipeline performs the following steps:
+..* Filters input DRPs by 100% sequence and structure identity
+..* Clusters input DRPs by native overlap
+..* Reclusters DRPs that have the Knottin SCOP fold by equivalent disulfide bond distance
+..* Reassigns longer singletons to more populated clustes
+..* Reassignes shorter singletons to more populated clusters
+
+These steps are performed using the distance matrices created above as input.
+
+#### Example
+*Note: If you don't have access to MODELLER but nevertheless want to demo the pipeline, distance matrices across the example 100-DRP dataset are also provided (identical to those that would have been generated in the previous steps).*
+
+```
+ python drp-clusters/drpclusters/cluster_pipeline.py -r clusterPipeline/ -q drpList.txt -f similarityProduct.txt -n longerFraction.txt -d disulfides.txt -s shorterFraction.txt -c 99 -t .9 -k 2.0 -v 0.01  -b 4 -l 7 -g .7 -e drp_lengths.txt -p allScopFamilies.txt
+```
+
+The clustering cutoffs in this example (specified by the `-c`, `-t`, `-k`, `-v`, `-b`, `-l`, and `-g` flags) have been optimized for the 100-DRP dataset. If the input dataset varies, the values of these parameters should be adjusted as described in the (original paper xyz (maybe image?)).
+
+The `drp_lengths.txt` file was created in step xyz above.
+
+
+xyz say how long various steps take
 
 ### 5. Create Visualization Sessions
+After the clusters have been created, an optional post-processing step can be run to align all DRPs in each cluster to their respective centroid. This step writes out the aligned PDB coordinates of each DRP for easy viewing in a visualization session (xyz see if this write out the pymol script).
+
+#### Example
+```
+condapython drp-clusters/drpclusters/cluster_vis_annotation.py -r visAnnotation/ -i 1 2 3 4 5 6 7 8 -c clusterPipeline/processShorterSingletons_cluster_members.txt -l clusterPipeline/processLongerSingletons_singleton_pairs.txt -f clusterPipeline/processShorterSingletons_singleton_pairs.txt -m .7 -p drpDir
+```
+
+In this example, the `-i` paramater value specifies which clusters to process and has been optimized for the 100-DRP dataset.
+
 
 ### 6. Cluster Text annotation (coming soon)
 
@@ -128,31 +162,6 @@ todo -- decide whether to grep these into 'distances' dir
 
 
 
-
-
-
-
-```
-Give examples
-```
-
-### Installing
-
-A step by step series of examples that tell you how to get a development env running
-
-Say what the step will be
-
-```
-Give the example
-```
-
-And repeat
-
-```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo
 
 ## Running the tests
 
