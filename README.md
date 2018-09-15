@@ -1,7 +1,7 @@
 # drp-clusters
 This project presents an automated protocol for clustering small disulfide-rich peptides (DRPs) using amino acid sequence and molecular structure features. Applying this protocol on DRPs in the Protein Databank yields insight into their evolution, and also results in a small, diverse set of representative DRPs that provide basis for further bioengineering efforts such as phage display. A detailed description of this approach, as well as its results and experimental application is available in [DT Barkan *et al*, *BMC Bioinformatics*, 2016](https://www.ncbi.nlm.nih.gov/pubmed/27881076). This code is available as supplemental files in that project; it is reproduced here for increased accessibility.
 
-todo: image of clustered DRPs??
+![DRP Cluster Example](images/cluster_example.png)
 
 ## Prerequisites
 - drp-clusters is run with Python 2.7.15 in a 64-bit Linux environment
