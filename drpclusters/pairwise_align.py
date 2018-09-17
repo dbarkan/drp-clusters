@@ -5,8 +5,8 @@ import tempfile
 import os
 import subprocess
 import argparse
-import alignNativeOverlap
-import alignDisulfides
+import align_native_overlap
+import align_disulfides
 import cluster_lib
 
 parser = argparse.ArgumentParser()
