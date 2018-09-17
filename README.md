@@ -1,7 +1,7 @@
 # drp-clusters
 This project presents an automated protocol for clustering small disulfide-rich peptides (DRPs) using amino acid sequence and molecular structure features. Applying this protocol on DRPs in the Protein Databank yields insight into their evolution, and also results in a small, diverse set of representative DRPs that provide basis for further bioengineering efforts such as phage display. A detailed description of this approach, as well as its results and experimental application is available in [DT Barkan *et al*, *BMC Bioinformatics*, 2016](https://www.ncbi.nlm.nih.gov/pubmed/27881076). This code is available as supplemental files in that project; it is reproduced here for increased accessibility.
 
-![DRP Cluster Example](images/cluster_example_2.png)
+![DRP Cluster Example](images/cluster_example.png)
 
 ## Prerequisites
 - drp-clusters is run with Python 2.7.15 in a 64-bit Linux environment
@@ -73,14 +73,13 @@ todo - optimal column width?
 todo - check 1koz case sensitive. Also syntax highlighting
 
 ### 2. Finalize PDB input
-Run the setup_pdb.py script to extract the coordinates of the DRP chains in each PDB entry and write them out as a separate PDB file. This step also writes out a file mapping DRPs to their sequence lengths, which is needed in step xyz. (`drp_lengths.txt`).
+Run the setup_pdb.py script to extract the coordinates of the DRP chains in each PDB entry and write them out as a separate PDB file. This step also writes out a file mapping DRPs to their sequence lengths (`drp_lengths.txt`), which is needed in step 4.
  
 #### Example
 
 ```
-<condapython> drp-clusters/drpclusters/setup_pdb.py  -q drp_list.txt -p dividedPdbDir/
+<condapython> drp-clusters/drpclusters/setup_pdb.py  -q drp_list.txt -p dividedPdbDir/ -l drp_lengths.txt
 ```
-todo -- output dir too and drp_lengths.txt param
 
 ### 3. Align DRP PDB files
 The protocol creates pairwise distances matrices using two methods, Native Overlap and Equivalent Disulfides. These matrices must be prepared prior to running the full pipeline. These are ideally prepared on a distributed compute cluster as the computation time scales exponentially, but if there is a tractable number of DRPs, it's possible to use a single CPU  (for reference, 100 DRPs takes xyz on a xyz system). Scripts for both methods are described.
@@ -135,9 +134,11 @@ These steps are performed using the distance matrices created above as input.
  python drp-clusters/drpclusters/cluster_pipeline.py -r clusterPipeline/ -q drpList.txt -f similarityProduct.txt -n longerFraction.txt -d disulfides.txt -s shorterFraction.txt -c 99 -t .9 -k 2.0 -v 0.01  -b 4 -l 7 -g .7 -e drp_lengths.txt -p allScopFamilies.txt
 ```
 
-The clustering cutoffs in this example (specified by the `-c`, `-t`, `-k`, `-v`, `-b`, `-l`, and `-g` flags) have been optimized for the 100-DRP dataset. If the input dataset varies, the values of these parameters should be adjusted as described in the (original paper xyz (maybe image?)).
+The clustering cutoffs in this example (specified by the `-c`, `-t`, `-k`, `-v`, `-b`, `-l`, and `-g` flags) have been optimized for the 100-DRP dataset. If the input dataset varies, the values of these parameters should be adjusted as described in the [original paper](https://www.ncbi.nlm.nih.gov/pubmed/27881076)
 
-The `drp_lengths.txt` file was created in step xyz above.
+![DRP Cluster Threshold Selection](images/cluster_thresholds.png)
+
+The `drp_lengths.txt` file was created in step 2 above.
 
 
 xyz say how long various steps take
