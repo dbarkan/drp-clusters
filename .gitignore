@@ -1,0 +1,8 @@
+*.pyc
+*~
+*.log
+*.svn/
+*.svn
+*.coverage
+build
+dist *egg*
