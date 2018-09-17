@@ -47,7 +47,7 @@ class PairwiseDisulfideAligner:
         if (modellerError):
             print "Skipping alignment between %s and %s due to Modeller error: %s" % (self.ref_pdb_code, self.target_pdb_code, str(modellerError))
             
-        raise cluster_lib.DrpFailureException(errorCode)
+        raise cluster_lib.ModellerError(errorCode)
 
     def prepareDrpCodes(self):
         [self.refPdbId, self.refChainId] = cluster_lib.readDrpCode(self.ref_pdb_code)

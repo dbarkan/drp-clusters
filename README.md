@@ -1,7 +1,7 @@
 # drp-clusters
 This project presents an automated protocol for clustering small disulfide-rich peptides (DRPs) using amino acid sequence and molecular structure features. Applying this protocol on DRPs in the Protein Databank yields insight into their evolution, and also results in a small, diverse set of representative DRPs that provide basis for further bioengineering efforts such as phage display. A detailed description of this approach, as well as its results and experimental application is available in [DT Barkan *et al*, *BMC Bioinformatics*, 2016](https://www.ncbi.nlm.nih.gov/pubmed/27881076). This code is available as supplemental files in that project; it is reproduced here for increased accessibility.
 
-todo: image of clustered DRPs??
+![DRP Cluster Example](images/cluster_example_2.png)
 
 ## Prerequisites
 - drp-clusters is run with Python 2.7.15 in a 64-bit Linux environment
@@ -10,9 +10,9 @@ todo: image of clustered DRPs??
 ## Installing
 - The drpclusters package can be installed using pip:
 
-```pip install drpclusters```
+`pip install drpclusters`
 
-- MODELLER is available for download [here](https://salilab.org/modeller/download_installation.html). If you use the [Ana/Miniconda scientific Python distribution](https://www.continuum.io/downloads), installing MODELLER as follows:
+- MODELLER is available for download [here](https://salilab.org/modeller/download_installation.html). If you use the [Ana/Miniconda scientific Python distribution](https://www.continuum.io/downloads), you can install MODELLER as follows:
 
 ```conda config --add channels salilab
 conda install modeller
@@ -24,7 +24,7 @@ MODELLER is free for academic use provided you [register for a license](https://
 
 If you run MODELLER using the python executable provided with your Conda installation, you may have to tell it where to find drpclusters, as it may ignore your PYTHONPATH. Do this either by specifying a target when installing with pip:
 
-```pip install --target=<conda_root>/lib/python2.7/site-packages/```
+`pip install --target=<conda_root>/lib/python2.7/site-packages/`
 
 todo -- make sure that works
 
@@ -38,11 +38,11 @@ If you install drpclusters elsewhere, it can be imported by your Conda installat
 ### Overview
 Below is a step-by-step guide to running the full pipeline start to finish. The drp-clusters package includes an example set of 100 DRP PDB files for demonstration and testing purposes. Each step below includes the commands to apply the pipeline to this example set of DRPs. 
 
-Most of these steps require using libraries from MODELLER. An exception is step xyz, which runs the actual clustering pipeline. If you don't have access to MODELLER but want to demo the pipeline, example distance matrix files are also provided. 
+Most of these steps require using libraries from MODELLER. An exception is step 4, which runs the actual clustering protocol. If you don't have access to MODELLER but want to demo the pipeline, example distance matrix files are also provided. 
 
 In this example, all steps are run in the `drp-clusters/example/` directory, which comes with the input files described in step 1 (using the two-letter PDB directory structure convention).
 
-Many commands are executed with `condapython`; this means they should be run with the python executable that comes with your conda distribution and includes MODELLER libraries. (Here, `condapython` is my alias to that executable).
+Many commands are executed with `<condapython>`; this means they should be run with the python executable that comes with your conda distribution and includes MODELLER libraries. (Here, `condapython` is my alias to that executable).
 
 ### 1. Compile pipeline input
 
@@ -54,13 +54,12 @@ which is Chain A in PDB 1KOZ, add the line '1kozA' (no quotes).
 #### PDB files
 You will need local access to the PDB coordinate files that are listed in the DRP file. This can be structured in one of two ways:
 
-todo: probably better formatting
 1. Mirrored copy of the PDB - many institutions have a local mirrored copy of the PDB, using the [middle two character directory format](https://www.rcsb.org/pages/download/ftp). If all entries in the DRP list are accounted for here, you're good to go.
 
 2. Alternatively, you can store the PDB entries for all DRPs in your input file in a single directory. They must be named with their standard PDB identifier (xyz case-insensitive?) (i.e. 1koz.pdb).
 
 #### SCOP family file
-A mapping of PDB chains to SCOP assignment (xyz verify) is also provided (`allScopFamilies.txt`). This file is current as of xyz and any updates are availabe as of xyz.
+A mapping of PDB chains to SCOP assignment is also provided (`scop_family_assignment.txt`). This was the final release of SCOP 1.0 in 2009; [SCOP is still being developed](https://scop.berkeley.edu/statistics/ver=2.06), but these knottin assignments were sufficient for the initial clustering protocol.
 
 #### Example
 No step is run here, but the PDB files need to be unpacked:
@@ -79,7 +78,7 @@ Run the setup_pdb.py script to extract the coordinates of the DRP chains in each
 #### Example
 
 ```
-condapython drp-clusters/drpclusters/setup_pdb.py  -q drpList.txt -p dividedPdbDir/
+<condapython> drp-clusters/drpclusters/setup_pdb.py  -q drp_list.txt -p dividedPdbDir/
 ```
 todo -- output dir too and drp_lengths.txt param
 
@@ -87,10 +86,10 @@ todo -- output dir too and drp_lengths.txt param
 The protocol creates pairwise distances matrices using two methods, Native Overlap and Equivalent Disulfides. These matrices must be prepared prior to running the full pipeline. These are ideally prepared on a distributed compute cluster as the computation time scales exponentially, but if there is a tractable number of DRPs, it's possible to use a single CPU  (for reference, 100 DRPs takes xyz on a xyz system). Scripts for both methods are described.
 
 #### Example: Single processor
-*This method iterates through all pairs of DRPs in `drpList.txt` and appends results to the `pairwise.txt` file*
+*This method iterates through all pairs of DRPs in `drp_list.txt` and appends results to the `pairwise.txt` file*
 ```
-condapython drp-clusters/drpclusters/pairwise_align.py  -q drpList.txt -p drpPdb -o pairwise.txt -m full_drp
-condapython drp-clusters/drpclusters/pairwise_align.py  -q drpList.txt -p drpPdb -o disulfides.txt -m disulfides
+<condapython> drp-clusters/drpclusters/pairwise_align.py  -q drp_list.txt -p drpPdb -o pairwise.txt -m full_drp
+<condapython> drp-clusters/drpclusters/pairwise_align.py  -q drp_list.txt -p drpPdb -o disulfides.txt -m disulfides
 grep longer_fraction pairwise.txt > longerFraction.txt
 grep longer_sequence_product pairwise.txt > similarityProduct.txt
 grep shorter_fraction pairwise.txt > shorterFraction.txt
@@ -104,12 +103,12 @@ todo -- decide whether to grep these into 'distances' dir
 ```
 mkdir nativeOverlapWork
 mkdir disulfideWork
-condapython drp-clusters/drpclusters/align_native_overlap.py -f 1b45A -s 1dfnA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
-condapython drp-clusters/drpclusters/align_native_overlap.py -f 1b45A -s 1hjeA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
-condapython drp-clusters/drpclusters/align_native_overlap.py -f 1dfnA -s 1hjeA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
-condapython drp-clusters/drpclusters/align_native_overlap.py -f 1b45A -s 1dfnA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
-condapython drp-clusters/drpclusters/align_native_overlap.py -f 1b45A -s 1hjeA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
-condapython drp-clusters/drpclusters/align_native_overlap.py -f 1dfnA -s 1hjeA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
+<condapython> drp-clusters/drpclusters/align_native_overlap.py -f 1b45A -s 1dfnA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
+<condapython> drp-clusters/drpclusters/align_native_overlap.py -f 1b45A -s 1hjeA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
+<condapython> drp-clusters/drpclusters/align_native_overlap.py -f 1dfnA -s 1hjeA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
+<condapython> drp-clusters/drpclusters/align_native_overlap.py -f 1b45A -s 1dfnA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
+<condapython> drp-clusters/drpclusters/align_native_overlap.py -f 1b45A -s 1hjeA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
+<condapython> drp-clusters/drpclusters/align_native_overlap.py -f 1dfnA -s 1hjeA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
 ```
 
 *After all individual pairwise distance files have been generated, merge them into a final set of files with the following:*
@@ -126,7 +125,6 @@ The cluster pipeline performs the following steps:
 ..* Clusters input DRPs by native overlap
 ..* Reclusters DRPs that have the Knottin SCOP fold by equivalent disulfide bond distance
 ..* Reassigns longer singletons to more populated clustes
-..* Reassignes shorter singletons to more populated clusters
 
 These steps are performed using the distance matrices created above as input.
 
@@ -164,55 +162,42 @@ In this example, the `-i` paramater value specifies which clusters to process an
 
 
 ## Running the tests
+=======
+..* Reassigns shorter singletons to more populated clusters
 
-Explain how to run the automated tests for this system
+These steps are performed using the distance matrices created above as input.
 
-### Break down into end to end tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-### And coding style tests
-
-Explain what these tests test and why
+#### Example
+*Note: If you don't have access to MODELLER but nevertheless want to demo the pipeline, distance matrices across the example 100-DRP dataset are also provided (identical to those that would have been generated in the previous steps).*
 
 ```
-Give an example
+ python drp-clusters/drpclusters/cluster_pipeline.py -r clusterPipeline/ -q drp_list.txt -f similarityProduct.txt -n longerFraction.txt -d disulfides.txt -s shorterFraction.txt -c 99 -t .9 -k 2.0 -v 0.01  -b 4 -l 7 -g .7 -e drp_lengths.txt -p scop_family_assignment.txt
 ```
 
-## Deployment
+The clustering cutoffs in this example (specified by the `-c`, `-t`, `-k`, `-v`, `-b`, `-l`, and `-g` flags) have been optimized for the 100-DRP dataset. If the input dataset varies, the values of these parameters should be adjusted as described in the (original paper xyz (maybe image?)).
+>>>>>>> ac78398a6003f318ce7f87efd5bd52e39bb40904
 
-Add additional notes about how to deploy this on a live system
+The `drp_lengths.txt` file was created in step xyz above.
 
-## Built With
 
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
+xyz say how long various steps take
 
-## Contributing
+### 5. Create Visualization Sessions
+After the clusters have been created, an optional post-processing step can be run to align all DRPs in each cluster to their respective centroid. This step writes out the aligned PDB coordinates of each DRP for easy viewing in a visualization session (xyz see if this write out the pymol script).
 
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
+#### Example
+```
+<condapython> drp-clusters/drpclusters/cluster_vis_annotation.py -r visAnnotation/ -i 1 2 3 4 5 6 7 8 -c clusterPipeline/processShorterSingletons_cluster_members.txt -l clusterPipeline/processLongerSingletons_singleton_pairs.txt -f clusterPipeline/processShorterSingletons_singleton_pairs.txt -m .7 -p drpDir
+```
 
-## Versioning
+In this example, the `-i` paramater value specifies which clusters to process and has been optimized for the 100-DRP dataset.
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
 
-## Authors
+### 6. Cluster Text annotation (coming soon)
 
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
 
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the GPLv3 License - see the [LICENSE.txt](LICENSE.txt) file for details
 
-## Acknowledgments
-
-* Hat tip to anyone whose code was used
-* Inspiration
-* etc
