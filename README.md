@@ -68,7 +68,6 @@ No step is run here, but the PDB files need to be unpacked:
 tar -xzf dividedPdb.tar.gz
 ```
 
-
 todo - optimal column width?
 todo - check 1koz case sensitive. Also syntax highlighting
 
@@ -89,12 +88,10 @@ The protocol creates pairwise distances matrices using two methods, Native Overl
 ```
 <condapython> drp-clusters/drpclusters/pairwise_align.py  -q drp_list.txt -p drpPdb -o pairwise.txt -m full_drp
 <condapython> drp-clusters/drpclusters/pairwise_align.py  -q drp_list.txt -p drpPdb -o disulfides.txt -m disulfides
-grep longer_fraction pairwise.txt > longerFraction.txt
-grep longer_sequence_product pairwise.txt > similarityProduct.txt
-grep shorter_fraction pairwise.txt > shorterFraction.txt
+grep longer_fraction pairwise.txt > longer_fraction.txt
+grep longer_sequence_product pairwise.txt > similarity_product.txt
+grep shorter_fraction pairwise.txt > shorter_fraction.txt
 ```
-
-todo -- decide whether to grep these into 'distances' dir
 
 #### Example: Distributed system
 *Alternatively, this method explicitly runs one command for each pair of DRPs. Each pair gets its own output file. To keep things clean, all output is stored in subdirectories. Since each pair of DRPs is processed with a single command, it can be run quickly on a cluster, in accordance with your cluster environment. These example commands only show all-vs-all commands for three DRPs; enumerating across all 100 pairs is left as an exercise to the user*
@@ -112,11 +109,10 @@ mkdir disulfideWork
 
 *After all individual pairwise distance files have been generated, merge them into a final set of files with the following:*
 ```
-grep longer_fraction nativeOverlapWork/*_no.txt > longerFraction.txt
-grep longer_sequence_product nativeOverlapWork/*_no.txt > similarityProduct.txt
-grep shorter_fraction nativeOverlapWork/*_no.txt > shorterFraction.txt
+grep longer_fraction nativeOverlapWork/*_no.txt > longer_fraction.txt
+grep longer_sequence_product nativeOverlapWork/*_no.txt > similarity_product.txt
+grep shorter_fraction nativeOverlapWork/*_no.txt > shorter_fraction.txt
 ```
-todo -- decide whether to grep these into 'distances' dir 
 
 ### 4. Run Cluster Pipeline
 The cluster pipeline performs the following steps:
@@ -128,74 +124,34 @@ The cluster pipeline performs the following steps:
 These steps are performed using the distance matrices created above as input.
 
 #### Example
-*Note: If you don't have access to MODELLER but nevertheless want to demo the pipeline, distance matrices across the example 100-DRP dataset are also provided (identical to those that would have been generated in the previous steps).*
+*Note: If you don't have access to MODELLER but nevertheless want to demo the pipeline, distance matrices across the example 100-DRP dataset are also provided in the `exampleDistances` directory (identical to those that would have been generated in the previous steps).*
 
 ```
- python drp-clusters/drpclusters/cluster_pipeline.py -r clusterPipeline/ -q drpList.txt -f similarityProduct.txt -n longerFraction.txt -d disulfides.txt -s shorterFraction.txt -c 99 -t .9 -k 2.0 -v 0.01  -b 4 -l 7 -g .7 -e drp_lengths.txt -p allScopFamilies.txt
+ python drp-clusters/drpclusters/cluster_pipeline.py -r clusterPipeline/ -q drp_list.txt -f similarity_product.txt -n longer_fraction.txt -d disulfides.txt -s shorter_fraction.txt -c 99 -t .9 -k 2.0 -v 0.01  -b 4 -l 7 -g .7 -e drp_lengths.txt -p scop_family_assignment.txt
 ```
 
 The clustering cutoffs in this example (specified by the `-c`, `-t`, `-k`, `-v`, `-b`, `-l`, and `-g` flags) have been optimized for the 100-DRP dataset. If the input dataset varies, the values of these parameters should be adjusted as described in the [original paper](https://www.ncbi.nlm.nih.gov/pubmed/27881076)
 
-![DRP Cluster Threshold Selection](images/cluster_thresholds.png)
+![](images/cluster_thresholds.png)
+*Demonstration of how varying thresholds affects clustering; (a) and (d) are optimal.*
 
 The `drp_lengths.txt` file was created in step 2 above.
 
-
-xyz say how long various steps take
+This step should take a few seconds on the example input.
 
 ### 5. Create Visualization Sessions
-After the clusters have been created, an optional post-processing step can be run to align all DRPs in each cluster to their respective centroid. This step writes out the aligned PDB coordinates of each DRP for easy viewing in a visualization session (xyz see if this write out the pymol script).
+After the clusters have been created, an optional post-processing step can be run to align all DRPs in each cluster to their respective centroid. This step writes out the aligned PDB coordinates of each DRP for easy viewing in a visualization session.
 
 #### Example
 ```
-condapython drp-clusters/drpclusters/cluster_vis_annotation.py -r visAnnotation/ -i 1 2 3 4 5 6 7 8 -c clusterPipeline/processShorterSingletons_cluster_members.txt -l clusterPipeline/processLongerSingletons_singleton_pairs.txt -f clusterPipeline/processShorterSingletons_singleton_pairs.txt -m .7 -p drpDir
+condapython drp-clusters/drpclusters/cluster_vis_annotation.py -r visAnnotation/ -i 1 2 3 4 5 6 7 8 -c clusterPipeline/processShorterSingletons_cluster_members.txt -l clusterPipeline/processLongerSingletons_singleton_pairs.txt -f clusterPipeline/processShorterSingletons_singleton_pairs.txt -m .7 -p drpPdb
 ```
 
 In this example, the `-i` paramater value specifies which clusters to process and has been optimized for the 100-DRP dataset.
 
+This step should take about a minute on the example input.
 
 ### 6. Cluster Text annotation (coming soon)
-
-
-
-
-
-
-
-## Running the tests
-=======
-..* Reassigns shorter singletons to more populated clusters
-
-These steps are performed using the distance matrices created above as input.
-
-#### Example
-*Note: If you don't have access to MODELLER but nevertheless want to demo the pipeline, distance matrices across the example 100-DRP dataset are also provided (identical to those that would have been generated in the previous steps).*
-
-```
- python drp-clusters/drpclusters/cluster_pipeline.py -r clusterPipeline/ -q drp_list.txt -f similarityProduct.txt -n longerFraction.txt -d disulfides.txt -s shorterFraction.txt -c 99 -t .9 -k 2.0 -v 0.01  -b 4 -l 7 -g .7 -e drp_lengths.txt -p scop_family_assignment.txt
-```
-
-The clustering cutoffs in this example (specified by the `-c`, `-t`, `-k`, `-v`, `-b`, `-l`, and `-g` flags) have been optimized for the 100-DRP dataset. If the input dataset varies, the values of these parameters should be adjusted as described in the (original paper xyz (maybe image?)).
->>>>>>> ac78398a6003f318ce7f87efd5bd52e39bb40904
-
-The `drp_lengths.txt` file was created in step xyz above.
-
-
-xyz say how long various steps take
-
-### 5. Create Visualization Sessions
-After the clusters have been created, an optional post-processing step can be run to align all DRPs in each cluster to their respective centroid. This step writes out the aligned PDB coordinates of each DRP for easy viewing in a visualization session (xyz see if this write out the pymol script).
-
-#### Example
-```
-<condapython> drp-clusters/drpclusters/cluster_vis_annotation.py -r visAnnotation/ -i 1 2 3 4 5 6 7 8 -c clusterPipeline/processShorterSingletons_cluster_members.txt -l clusterPipeline/processLongerSingletons_singleton_pairs.txt -f clusterPipeline/processShorterSingletons_singleton_pairs.txt -m .7 -p drpDir
-```
-
-In this example, the `-i` paramater value specifies which clusters to process and has been optimized for the 100-DRP dataset.
-
-
-### 6. Cluster Text annotation (coming soon)
-
 
 
 ## License
