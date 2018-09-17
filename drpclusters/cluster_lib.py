@@ -8,10 +8,13 @@ import math
 import time
 import shutil
 
-class DrpFailureException(Exception):
+class DrpClusterException(Exception):
     pass
 
-class InvalidDrpCodeError(Exception):
+class ModellerError(DrpClusterException):
+    pass
+
+class InvalidDrpCodeError(DrpClusterException):
     pass
 
 SingletonTuple = collections.namedtuple("SingletonTuple", ['singletonDrpCode', 'refDrp',

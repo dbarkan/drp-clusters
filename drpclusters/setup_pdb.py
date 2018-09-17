@@ -7,11 +7,17 @@ import argparse
 import gzip
 import cluster_lib
 
+class MissingPdbFile(cluster_lib.DrpClusterException):
+    pass
+
 class PdbCopy:
-    def copyPdbs(self, inputDrpFile, pdbDir):
-        fh = open(inputDrpFile, 'r')
+    def makeMirrorPdb(self, config, pdbId):
+        return os.path.join(config.pdb_directory, pdbId[1:3], "pdb%s.ent.gz" % pdbId)
+
+    def copyPdbs(self, config):
+        fh = open(config.drp_query_file, 'r')
         counter = 0
-        lengthOutputFh = open("drp_lengths.txt", "w")
+        lengthOutputFh = open(config.drp_length_output_file, "w")
         for line in fh:
             counter += 1
             if (counter % 10 == 0):
@@ -21,18 +27,20 @@ class PdbCopy:
                 continue
 
             [pdbId, chainId] = cluster_lib.readDrpCode(line)
-            fullPdb = os.path.join(pdbDir, pdbId[1:3], "pdb%s.ent.gz" % pdbId)
-            if (not os.path.exists(fullPdb)):
-                msg =  "ERROR: did not find expected PDB file %s for DRP code %s\n" % (fullPdb, line)
-                msg += "Please ensure your local PDB mirror is set up according to specifications in the documentation\n"
-                msg += "Please also make sure the path you specified to the PDB mirror root directory is correct"
-                print msg
-                sys.exit()
             
+            fullPdb = self.makeMirrorPdb(config, pdbId)
+            if (not os.path.exists(fullPdb)):
+                fullPdb = os.path.join(config.pdb_directory, "%s.pdb" pdbId)
+                if (not os.path.exists(fullPdb)):
+                    raise MissingPdbFileException("Did not find expected PDB file for DRP code %s\n"
+                                                  "Searched for the following:\n%s\n%s\n"
+                                                  "Please ensure your local PDB mirror is set up according to specifications in the documentation\n"
+                                                  "Please also make sure the path you specified to the PDB mirror root directory is correct" % (pdbId, fullPdb, self.makeMirrorPdb(config, pdbId)))
+
             #use MODELLER to read coordinate file from pdbDir
             log.none()
             env = environ()
-            env.io.atom_files_directory = ['.', pdbDir]
+            env.io.atom_files_directory = ['.', config.pdb_directory]
             firstModel = model(env, file=pdbId, model_segment=('FIRST:'+chainId, 'LAST:'+chainId))
 
             #write to length output file for cluster pipeline downstream
@@ -70,11 +78,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Copy DRP PDB files to cwd (only save coordinates for chain representing DRP, along with SSBOND info)")
     parser.add_argument("-q", "--drp_query_file", help="Text file with input set of DRPs. One DRP per line, specified as a DRP code (5 characters; first 4 are PDB ID and 5th is chain, eg 1zdcA)", required=True)
     parser.add_argument("-p", "--pdb_directory", required=True, help="Location of PDB files. Expected format is identical to the 'divided' PDB FTP site at ftp://ftp.wwpdb.org/pub/pdb/data/structures/divided/pdb/")
-    
+    parser.add_argument("-l", "--drp_length_output_file", help="Output file to write DRP sequence length annotation", default="drp_lengths.txt")
     if (len(sys.argv) < 2):
         print "Please run with '-h' for full usage"
         sys.exit()
     config = parser.parse_args(sys.argv[1:])
     pc = PdbCopy()
-    pc.copyPdbs(config.drp_query_file, config.pdb_directory)
+    pc.copyPdbs(config)
 
