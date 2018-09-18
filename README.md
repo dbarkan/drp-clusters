@@ -47,7 +47,7 @@ Many commands are executed with `<condapython>`; this means they should be run w
 #### DRP file
 Create a file with a list of DRPs, one per line. Each DRP should be represented by its PDB ID and
 the chain in the PDB entry associated with the DRP. For example, for the DRP omega-grammotoxin SIA,
-which is Chain A in PDB 1KOZ, add the line '1kozA' (no quotes).
+which is Chain A in PDB 1koz, add the line '1kozA' (no quotes).
 
 #### PDB files
 You will need local access to the PDB coordinate files that are listed in the DRP file. This can be structured in one of two ways:
@@ -80,7 +80,7 @@ mkdir drpPdb
 The protocol creates pairwise distances matrices using two methods, Native Overlap and Equivalent Disulfides. These matrices must be prepared prior to running the full pipeline. These are ideally prepared on a distributed compute cluster as the computation time scales exponentially, but if there is a tractable number of DRPs, it's possible to use a single CPU  (for reference, 100 DRPs takes a couple hours on a single Intel Xeon E5-2620 2.10 GHz core). Scripts for both methods are described.
 
 #### Example: Single processor
-*This method iterates through all pairs of DRPs in `drp_list.txt` and appends results to the `pairwise.txt` file*
+This method iterates through all pairs of DRPs in `drp_list.txt` and appends results to the `pairwise.txt` file
 ```
 <condapython> drp-clusters/drpclusters/pairwise_align.py  -q drp_list.txt -p drpPdb -o pairwise.txt -m full_drp
 <condapython> drp-clusters/drpclusters/pairwise_align.py  -q drp_list.txt -p drpPdb -o disulfides.txt -m disulfides
@@ -103,7 +103,7 @@ mkdir disulfideWork
 <condapython> drp-clusters/drpclusters/align_native_overlap.py -f 1dfnA -s 1hjeA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
 ```
 
-*After all individual pairwise distance files have been generated, merge them into a final set of files with the following:*
+After all individual pairwise distance files have been generated, merge them into a final set of files with the following:
 ```
 grep longer_fraction nativeOverlapWork/*_no.txt > longer_fraction.txt
 grep longer_sequence_product nativeOverlapWork/*_no.txt > similarity_product.txt
@@ -112,10 +112,10 @@ grep shorter_fraction nativeOverlapWork/*_no.txt > shorter_fraction.txt
 
 ### 4. Run Cluster Pipeline
 The cluster pipeline performs the following steps:
-..* Filters input DRPs by 100% sequence and structure identity
-..* Clusters input DRPs by native overlap
-..* Reclusters DRPs that have the Knottin SCOP fold by equivalent disulfide bond distance
-..* Reassigns longer singletons to more populated clustes
+* Filters input DRPs by 100% sequence and structure identity
+* Clusters input DRPs by native overlap
+* Reclusters DRPs that have the Knottin SCOP fold by equivalent disulfide bond distance
+* Reassigns longer singletons to more populated clustes
 
 These steps are performed using the distance matrices created above as input.
 
