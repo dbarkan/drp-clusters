@@ -27,7 +27,7 @@ class PairwiseNativeOverlapAligner:
         
         if (modellerError):
             print "Skipping alignment between %s and %s due to Modeller error: %s" % (self.first_pdb_code, self.second_pdb_code, str(modellerError))
-        raise cluster_lib.DrpFailureException(errorCode)
+        raise cluster_lib.ModellerException(errorCode)
         
     def execute(self):
         appendString = 'w'

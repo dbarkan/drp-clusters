@@ -7,7 +7,7 @@ import argparse
 import gzip
 import cluster_lib
 
-class MissingPdbFile(cluster_lib.DrpClusterException):
+class MissingPdbFileException(cluster_lib.DrpClusterException):
     pass
 
 class PdbCopy:
@@ -30,7 +30,7 @@ class PdbCopy:
             
             fullPdb = self.makeMirrorPdb(config, pdbId)
             if (not os.path.exists(fullPdb)):
-                fullPdb = os.path.join(config.pdb_directory, "%s.pdb" pdbId)
+                fullPdb = os.path.join(config.pdb_directory, "%s.pdb" % pdbId)
                 if (not os.path.exists(fullPdb)):
                     raise MissingPdbFileException("Did not find expected PDB file for DRP code %s\n"
                                                   "Searched for the following:\n%s\n%s\n"
@@ -65,7 +65,7 @@ class PdbCopy:
                     ssBondLines.append(fullLine)
 
             #concatenate temp file and SS BOND info into final PDB file
-            finalDrpFh = open("%s.pdb" % line, 'w')
+            finalDrpFh = open(os.path.join(config.output_directory, "%s.pdb" % line), 'w')
             outputLines = [pdbLines[0]] + ssBondLines + pdbLines[1:]
             finalDrpFh.write("".join(outputLines))
             finalDrpFh.close()
@@ -78,6 +78,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Copy DRP PDB files to cwd (only save coordinates for chain representing DRP, along with SSBOND info)")
     parser.add_argument("-q", "--drp_query_file", help="Text file with input set of DRPs. One DRP per line, specified as a DRP code (5 characters; first 4 are PDB ID and 5th is chain, eg 1zdcA)", required=True)
     parser.add_argument("-p", "--pdb_directory", required=True, help="Location of PDB files. Expected format is identical to the 'divided' PDB FTP site at ftp://ftp.wwpdb.org/pub/pdb/data/structures/divided/pdb/")
+    parser.add_argument("-o", "--output_directory", required=True, help="Output directory to which single chain PDB files will be written")
     parser.add_argument("-l", "--drp_length_output_file", help="Output file to write DRP sequence length annotation", default="drp_lengths.txt")
     if (len(sys.argv) < 2):
         print "Please run with '-h' for full usage"

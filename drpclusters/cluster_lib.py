@@ -11,7 +11,7 @@ import shutil
 class DrpClusterException(Exception):
     pass
 
-class ModellerError(DrpClusterException):
+class ModellerException(DrpClusterException):
     pass
 
 class InvalidDrpCodeError(DrpClusterException):

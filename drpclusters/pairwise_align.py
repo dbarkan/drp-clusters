@@ -37,9 +37,9 @@ for i in range(len(drpList)):
     for j in range(i+1, len(drpList)):
         pnoa = None
         if (config.align_mode == 'full_drp'):
-            pnoa = alignNativeOverlap.PairwiseNativeOverlapAligner()
+            pnoa = align_native_overlap.PairwiseNativeOverlapAligner()
         else:
-            pnoa = alignDisulfides.PairwiseDisulfideAligner()
+            pnoa = align_disulfides.PairwiseDisulfideAligner()
 
         iDrp = drpList[i]
         jDrp = drpList[j]
@@ -47,7 +47,7 @@ for i in range(len(drpList)):
         pnoa.setParams(iDrp, jDrp, config.pdb_directory, config.output_file, True)
         try:
             pnoa.execute()
-        except cluster_lib.DrpFailureException, e: #these are occasional errors inherent in modeller, safe to ignore. Other Exceptions will not be caught
+        except cluster_lib.ModellerException, e: #these are occasional errors inherent in modeller, safe to ignore. Other Exceptions will not be caught
             pass
 
 
