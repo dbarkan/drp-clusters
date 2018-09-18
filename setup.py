@@ -6,12 +6,12 @@ import os
 import sys
 
 setup(name='drpclusters',
-      version='0.1.3',
+      version='1.0.0',
       description='Structural clustering of disulfide-rich peptides',
       url='https://github.com/dbarkan/drp-clusters/',
       author='Dave Barkan',
       author_email='davebarkan@gmail.com',
-      install_requires=['biopython>=1.7.2'],
+      #install_requires=['biopython>=1.7.2'],
       license='GPL',
       packages=['drpclusters'],
       include_package_data=True,
