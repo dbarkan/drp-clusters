@@ -6,6 +6,7 @@ This project presents an automated protocol for clustering small disulfide-rich 
 ## Prerequisites
 - drp-clusters is run with Python 2.7.15 in a 64-bit Linux environment
 - [MODELLER libraries](https://salilab.org/modeller/) are required for large components of the software. 
+- Tests are ideally run in the [nose framework](https://nose.readthedocs.io/en/latest/)
 
 ## Installing
 - The drpclusters package can be installed using pip:
@@ -40,7 +41,7 @@ Most of these steps require using libraries from MODELLER. An exception is step 
 
 In this example, all steps are run in the `drpclusters/exampleData/` directory, which comes with the input files described in step 1 (using the two-letter PDB directory structure convention for PDB files).
 
-Many commands are executed with `<condapython>`; this means they should be run with the python executable that comes with your conda distribution and includes MODELLER libraries. (Here, `condapython` is my alias to that executable).
+Many commands are executed with `<condapython>`; this means they should be run with the python executable that comes with your conda distribution and includes MODELLER libraries. (Here, `condapython` is my alias to that executable). If you didn't install MODELLER using a Conda distribution, you can just use your normal Python executable provided MODELLER libraries are in your PYTHONPATH.
 
 ### 1. Compile pipeline input
 
@@ -149,6 +150,38 @@ This step should take about a minute on the example input.
 
 ### 6. Cluster Text annotation (coming soon)
 
+
+## Running Tests
+A handful of unit and integration tests are provided in this package, using the python `unittest` framework. These tests have high overlap with the example above (although do not run the full all-vs-all DRP alignment steps).
+
+Similar to the example, running the full set of tests requires access to MODELLER libraries. If you don't have access, you can still run a subset of these tests.
+
+### Setting up the test environment
+If MODELLER is installed using the Ana/Miniconda framework, the tests access the Python executable provided in that distribution using an environment variable, `CONDA`. In bash, set this as follows:
+
+`export CONDA=path/to/conda/python`
+
+This reverts to your system's default Python executable if the `$CONDA` variable isn't set.
+
+While not required, the [nose library](https://nose.readthedocs.io/en/latest/) is the best way to run tests.
+
+Most tests create a temporary directory using Python's `tempfile` API (generally requiring permission to write to `/tmp`).
+
+### Unit and integration tests
+Run the tests as follows:
+
+```
+cd drp-clusters/drpclusters/test/
+nosetests -a type=unit --nocapture --nologcapture
+nosetests -a type=integration --nocapture --nologcapture
+```
+
+These run the `test_drp_clusters.py` test suite. The `-a type=unit` flag runs the basic cluster pipeline and doesn't require MODELLER access (step 4 above). The `-a type=integration` flag runs the other components (steps 2, 3, and 5 above) and does require MODELLER. Omitting these flags runs all tests in the suite.
+
+If you don't use nose, you can run all tests at once with `python test_drp_clusters.py`. 
+
+### Tips
+The tests automatically delete the temporary directories upon completion. To retain them (for example, if you want to look at the output files), comment out the tearDown method in `test_drp_clusters.py`.
 
 ## License
 

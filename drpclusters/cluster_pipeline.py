@@ -112,7 +112,6 @@ class ClusterPipelineRunner(cluster_lib.Runner):
         @param clusterOrder -- order in which to initialize DRPs, returned by self.readClusterOrder()
         """
         clusterList = []
-        print 'type of drps is %s' % drpList[0]
         sortedDrpList = self.createDrpListForClustering(drpList, distanceMatrix, clusterOrder)
 
         for (i, drp) in enumerate(sortedDrpList):
@@ -332,7 +331,7 @@ class ClusterPipelineRunner(cluster_lib.Runner):
                 bottomClusterSet.addCluster(nextCluster)
         return [topClusterSet, bottomClusterSet]
 
-if __name__ == '__main__':
+def getParser():
     parser = argparse.ArgumentParser()
     
     parser.add_argument("-r", "--run_directory", help="Directory to which output is written. Will be created if does not exists", required=True)
@@ -350,7 +349,11 @@ if __name__ == '__main__':
     parser.add_argument("-g", "--singleton_cutoff", required=True, default=0.7, help="In the singleton steps for the pipeline, DRPs are added from the smaller clusters to larger clusters if they are within this cutoff. Recommend to be identical to native_overlap_cutoff")
     parser.add_argument("-e", "--drp_length_file", required=True, help="tab-delimited file of DRP codes to sequence lengths")
     parser.add_argument("-p", "--scop_file", required=True, help="SCOP fold file, format identical to http://scop.mrc-lmb.cam.ac.uk/scop/parse/dir.des.scop.txt_1.75")
+    return parser
 
+if __name__ == '__main__':
+
+    parser = getParser()
     if (len(sys.argv) < 2):
         print "Please run with '-h' for full usage"
         sys.exit()

@@ -835,7 +835,6 @@ class HierarchicalClusters:
             self.clusterDistanceMatrix[i] = {}
             
             for j in range (i+1, len(self.clusterList)):
-                
                 self.addInitialDistancePair(i, j)
                 self.addInitialDistancePair(j, i)
 
