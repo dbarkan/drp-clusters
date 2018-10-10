@@ -51,22 +51,38 @@ class ClusterVisAnnotationRunner(cluster_lib.Runner):
                     finalFile = os.path.join(clusterOutputDir, "%s_fit.pdb" % drpCode)
                     shutil.move(sourcePdb, finalFile)
 
+    def makeLogPrefix(self):
+        return "clusterVisAnnotation"
+
+def getParser():
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description="Align all DRPs in each cluster for visualization purposes")
+    
+    parser.add_argument("-r", dest="run_directory", metavar="<directory>", required=True,
+                        help="Directory to which output is written. Will be created if does not exists")
+    
+    parser.add_argument("-i", dest="cluster_index_list", metavar="<space-separated list>", nargs='+', required=True,
+                        help="List of cluster indices to align")
+    
+    parser.add_argument("-c", dest="cluster_member_file", metavar="<file>", required=True,
+                        help="Final 'cluster_members.txt' file written by cluster_pipeline.py (usually shorter singletons file")
+    
+    parser.add_argument("-l", dest="longer_singleton_file", metavar="<file>", required=True,
+                        help="processLongerSingletons_singleton_pairs.txt file written by cluster_pipeline.py")
+    
+    parser.add_argument("-f", dest="shorter_singleton_file", metavar="<file>", required=True,
+                        help="processLongerSingletons_singleton_pairs.txt file written by cluster_pipeline.py")
+    
+    parser.add_argument("-m", dest="singleton_merge_cutoff", metavar="<float>", required=True,
+                        help="Singleton merge cutoff; should be identical to the one set in cluster_pipeline.py")
+    
+    parser.add_argument("-p", dest="drp_pdb_directory", metavar="<directory>", required=True,
+                        help="Location of PDB files. Created in setup_pdb.py; each file should be named after its DRP code\n\n")
+
+    return parser
+
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser()
-    
-    parser.add_argument("-r", "--run_directory", help="Directory to which output is written. Will be created if does not exists", required=True)
-    parser.add_argument("-i", "--cluster_index_list", nargs='+', required=True, help="List of cluster indices to align")
-    parser.add_argument("-c", "--cluster_member_file", required=True, help="Final 'cluster_members.txt' file written by clustering pipeline (usually shorter singletons file") 
-    parser.add_argument("-l", "--longer_singleton_file", required=True, help="processLongerSingletons_singleton_pairs.txt file written by clustering pipeline") 
-    parser.add_argument("-f", "--shorter_singleton_file", required=True, help="processLongerSingletons_singleton_pairs.txt file written by clustering pipeline") 
-    parser.add_argument("-m", "--singleton_merge_cutoff", required=True, help="Singleton merge cutoff; should be identical to the one set in previous step") 
-    parser.add_argument("-p", "--drp_pdb_directory", required=True, help="Directory in which PDB files live (ideally should be same directory as previous step; see documentation for details")
-    
-    if (len(sys.argv) < 2):
-        print "Please run with '-h' for full usage"
-        sys.exit()
-        
+    parser = getParser()
     config = parser.parse_args(sys.argv[1:])
 
     runner = ClusterVisAnnotationRunner(config)

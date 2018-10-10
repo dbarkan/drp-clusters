@@ -2,12 +2,14 @@ import sys
 import os
 import re
 import subprocess
+import logging
 from operator import itemgetter
 import collections
 import math
 import time
 import shutil
 
+logger = logging.getLogger(__name__)
 class DrpClusterException(Exception):
     pass
 
@@ -27,7 +29,7 @@ def readDrpCode(drpCode):
     """
     if (len(drpCode) != 5 and not drpCode.endswith('_fit')):
         raise InvalidDrpCodeError("Expected 5 character DRP code, format PDB ID + Chain ID "
-                                  "(e.g. 1zdcA). Instead got DRP code %s" % drpCode)
+                                  "(e.g. 1zdcA). Instead got DRP code %s." % drpCode)
 
     #These methods are a little simple but allow for modifying drp code format in a single location
     pdbId = drpCode[0:4]
@@ -39,6 +41,14 @@ def makeDrpCode(pdbId, chainId):
     #exception if not 5 chars?
     return "%s%s" % (pdbId, chainId)
 
+def readDrpCodeFile(fileName):
+    pfr = PtFileReader(fileName)
+    drpCodeList = []
+    for line in pfr.getLines():
+        readDrpCode(line) #just validate format
+        drpCodeList.append(line)
+    return drpCodeList
+        
 class Drp(object):
 
     """Class to handle all aspects of DRPs"""
@@ -100,6 +110,7 @@ class Runner(object):
     def __init__(self, config):
         self.config = config
         self.makeOutputDirectory()
+        self.initLogging()
 
     def makeOutputDirectory(self):
         runDirectory = self.config.run_directory
@@ -110,6 +121,20 @@ class Runner(object):
     def getFullOutputFile(self, fileName):
         return os.path.join(self.fullOutputDir, fileName)
 
+    def initLogging(self, level=logging.INFO):
+        formatString =  '[%(asctime)s] [%(name)s] [%(levelname)s]: %(message)s'
+        logging.basicConfig(filename=self.makeLogFileName(), filemode='w', format=formatString, level=level)
+        consoleHandler = logging.StreamHandler(sys.stdout)  
+        consoleHandler.setLevel(level)
+        formatter = logging.Formatter(formatString, "%Y-%m-%d %H:%M:%S")
+        consoleHandler.setFormatter(formatter)
+        logging.getLogger().addHandler(consoleHandler)
+        logging.getLogger().setLevel(level)
+
+    def makeLogFileName(self):
+        return self.getFullOutputFile("%s.log" % self.makeLogPrefix())
+
+    
 class PtFileReader:
 
     """Essentially python file object that provides commonly used processing functionality"""
@@ -268,7 +293,6 @@ class DisulfideDrpDistances:
         reader = PtFileReader(fileName)
       
         lines = reader.getLines()
-        tempOutputFh = open("tempDrpFile", "w")
         for (lineCount, line) in enumerate(lines):
 
             line = line.rstrip("\n\r")
@@ -279,9 +303,6 @@ class DisulfideDrpDistances:
             #2ny9X   2frbA   cysteiene_rms   2.58908390999   ['35', '16', '3', '30'] ['2', '7', '3', '13']
             firstCysteineOrder = self.stringToList(firstCysteineString)
             secondCysteineOrder = self.stringToList(firstCysteineString)
-
-            if (firstPdbCode in filterDrps and secondPdbCode in filterDrps):
-                tempOutputFh.write("%s\n" % line)
 
             self.addDistance(firstPdbCode, secondPdbCode, distance, firstCysteineOrder, secondCysteineOrder)
             self.addDistance(secondPdbCode, firstPdbCode, distance, secondCysteineOrder, firstCysteineOrder)
@@ -452,6 +473,8 @@ class DrpClusterSet:
     def getClusterList(self):
         return self.clusterDict.values()
 
+    def getClusterCount(self):
+        return len(self.clusterDict)
 
     def getCluster(self, clusterIndex):
         return self.clusterDict[int(clusterIndex)]
@@ -459,7 +482,9 @@ class DrpClusterSet:
     def writeSingletonFile(self, fileName, singletonType):
         outputFh = open(fileName, 'w')
         for cluster in self.clusterDict.values():
+            
             for drp in cluster.getMemberList():
+                #print 'next %s drp test: %s' % (singletonType, drp.drpCode)
                 if (drp.isSingleton() and drp.getSingletonTuple().singletonType == singletonType):  #1/20/16: fixed bug that wrote all singletons regardless of type
                     outputLine = [drp.drpCode, drp.getSingletonTuple().refDrp, drp.getSingletonTuple().distance]
                     outputFh.write("%s\n" % '\t'.join(str(x) for x in outputLine))
@@ -643,7 +668,7 @@ class DrpCluster(Cluster):
         env = environ()
         env.io.atom_files_directory = [pdbDirectory]
         aln = alignment(env)
-        print "CLUSTER %s Salign" % int(self.getClusterIndex() + 1)
+        logger.info("Running SALIGN on Cluster %s" % int(self.getClusterIndex() + 1))
         for drp in self.getMemberList():
             if (skipSingletons and drp.isSingleton()):
                 continue
@@ -826,7 +851,7 @@ class HierarchicalClusters:
         self.distanceComparer = distanceComparer
         self.clusterList = clusterList
         self.initializeClusterDistances()
-        self.bestDistance = "N/A"
+        self.bestDistance = None
         
     def initializeClusterDistances(self):
         for i in range (len(self.clusterList)):
@@ -895,7 +920,13 @@ class HierarchicalClusters:
             if (cluster.isActive):
                 activeCount += 1
         if (activeCount % 10 == 0):
-            print "Number of active clusters: %s best distance: %s" % (activeCount, self.bestDistance)
+            distanceOutput = None
+            if (self.bestDistance):
+                distanceOutput = round(self.bestDistance, 4)
+            else:
+                distanceOutput = "N/A"
+                
+            logger.info("Number of active clusters: %s next distance to merge: %s" % (activeCount, distanceOutput))
             
         return activeCount > 1
 

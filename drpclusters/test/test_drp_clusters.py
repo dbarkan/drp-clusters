@@ -85,7 +85,10 @@ class ClusterPipelineTest(unittest.TestCase):
         pfr = cluster_lib.PtFileReader(os.path.join(self.experimentDir, 'processShorterSingletons_cluster_members.txt'))
         self.assertEquals(len(pfr.getLines()), 95)
         self.assertEquals(pfr.getLines()[-1], "8	2ny9X")
-    
+
+    def tearDown(self):
+        shutil.rmtree(self.experimentDir)
+        
 @attr(type='integration')            
 class ClusterIntegrationTests(unittest.TestCase):
     def setUp(self):
@@ -114,6 +117,7 @@ class ClusterIntegrationTests(unittest.TestCase):
         self.copyDrpListFile()
         os.mkdir(os.path.join(self.experimentDir, 'drpDir'))
         subprocess.check_output([self.miniCondaCmd, os.path.join(self.scriptDir, 'setup_pdb.py'),
+                                 '-r', self.experimentDir,
                                  '-q', os.path.join(self.experimentDir, 'drp_list.txt'),
                                  '-p', os.path.join(self.experimentDir, 'dividedPdb'),
                                  '-l', os.path.join(self.experimentDir, 'drp_lengths.txt'),
@@ -127,6 +131,7 @@ class ClusterIntegrationTests(unittest.TestCase):
     def test_align_drps(self):
         self.runFullSetupPdb()
         subprocess.check_output([self.miniCondaCmd, os.path.join(self.scriptDir, 'pairwise_align.py'),
+                                 '-r', self.experimentDir,                                 
                                  '-q', os.path.join(self.experimentDir, 'drp_list.txt'),
                                  '-p', os.path.join(self.experimentDir, 'drpDir'),
                                  '-m', 'full_drp',
@@ -137,6 +142,7 @@ class ClusterIntegrationTests(unittest.TestCase):
         self.assertEquals(pfr.getLines()[0], '1m2sA	2ktxA	native_overlap	36')
 
         subprocess.check_output([self.miniCondaCmd, os.path.join(self.scriptDir, 'pairwise_align.py'),
+                                 '-r', self.experimentDir,                                 
                                  '-q', os.path.join(self.experimentDir, 'drp_list.txt'),
                                  '-p', os.path.join(self.experimentDir, 'drpDir'),
                                  '-m', 'disulfides',

@@ -50,12 +50,14 @@ Create a file with a list of DRPs, one per line. Each DRP should be represented 
 the chain in the PDB entry associated with the DRP. For example, for the DRP omega-grammotoxin SIA,
 which is Chain A in PDB 1koz, add the line '1kozA' (no quotes).
 
+Matching DRPs in this file to PDB files is done in a case-sensitive fashion. It is recommended to have all PDB identifiers lowercase and the chain uppercase to improve readability.
+
 #### PDB files
 You will need local access to the PDB coordinate files that are listed in the DRP file. This can be structured in one of two ways:
 
 1. Mirrored copy of the PDB - many institutions have a local mirrored copy of the PDB, using the [middle two character directory format](https://www.rcsb.org/pages/download/ftp). If all entries in the DRP list are accounted for here, you're good to go.
 
-2. Alternatively, you can store the PDB entries for all DRPs in your input file in a single directory. They must be named with their standard PDB identifier, in lowercase (i.e. 1koz.pdb).
+2. Alternatively, you can store the PDB entries for all DRPs in your input file in a single directory. They must be named with their standard PDB identifier (i.e. 1koz.pdb).
 
 #### SCOP family file
 A mapping of PDB chains to SCOP assignment is also provided (`scop_family_assignment.txt`). This was the final release of SCOP 1.0 in 2009; [SCOP is still being contributed to](https://scop.berkeley.edu/statistics/ver=2.06), but these knottin assignments were sufficient for the initial clustering protocol.
@@ -74,17 +76,17 @@ Run the setup_pdb.py script to extract the coordinates of the DRP chains in each
 
 ```
 mkdir drpPdb
-<condapython> drp-clusters/drpclusters/setup_pdb.py  -q drp_list.txt -p dividedPdb/ -l drp_lengths.txt -o drpPdb
+<condapython> drp-clusters/drpclusters/setup_pdb.py -r . -q drp_list.txt -p dividedPdb/ -l drp_lengths.txt -o drpPdb
 ```
 
 ### 3. Align DRP PDB files
-The protocol creates pairwise distances matrices using two methods, Native Overlap and Equivalent Disulfides. These matrices must be prepared prior to running the full pipeline. These are ideally prepared on a distributed compute cluster as the computation time scales exponentially, but if there is a tractable number of DRPs, it's possible to use a single CPU  (for reference, 100 DRPs takes a couple hours on a single Intel Xeon E5-2620 2.10 GHz core). Scripts for both methods are described.
+The protocol creates pairwise distances matrices using two methods, Native Overlap and Equivalent Disulfides. These matrices must be prepared prior to running the full pipeline. These are ideally prepared on a distributed compute cluster as the computation time scales exponentially, but if there is a tractable number of DRPs, it's possible to use a single CPU  (for reference, 100 DRPs takes ~2 hours on a single Intel Xeon E5-2620 2.10 GHz core). Scripts for both methods are described.
 
 #### Example: Single processor
 This method iterates through all pairs of DRPs in `drp_list.txt` and appends results to the `pairwise.txt` file
 ```
-<condapython> drp-clusters/drpclusters/pairwise_align.py  -q drp_list.txt -p drpPdb -o pairwise.txt -m full_drp
-<condapython> drp-clusters/drpclusters/pairwise_align.py  -q drp_list.txt -p drpPdb -o disulfides.txt -m disulfides
+<condapython> drp-clusters/drpclusters/pairwise_align.py -r .  -q drp_list.txt -p drpPdb -o pairwise.txt -m full_drp
+<condapython> drp-clusters/drpclusters/pairwise_align.py -r . -q drp_list.txt -p drpPdb -o disulfides.txt -m disulfides
 grep longer_fraction pairwise.txt > longer_fraction.txt
 grep longer_sequence_product pairwise.txt > similarity_product.txt
 grep shorter_fraction pairwise.txt > shorter_fraction.txt
@@ -99,9 +101,9 @@ mkdir disulfideWork
 <condapython> drp-clusters/drpclusters/align_native_overlap.py -f 1b45A -s 1dfnA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
 <condapython> drp-clusters/drpclusters/align_native_overlap.py -f 1b45A -s 1hjeA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
 <condapython> drp-clusters/drpclusters/align_native_overlap.py -f 1dfnA -s 1hjeA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
-<condapython> drp-clusters/drpclusters/align_native_overlap.py -f 1b45A -s 1dfnA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
-<condapython> drp-clusters/drpclusters/align_native_overlap.py -f 1b45A -s 1hjeA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
-<condapython> drp-clusters/drpclusters/align_native_overlap.py -f 1dfnA -s 1hjeA -p drpPdb -o nativeOverlapWork/1b45A_1dfnA_no.txt
+<condapython> drp-clusters/drpclusters/align_disulfides.py -f 1b45A -s 1dfnA -p drpPdb -o disulfideWork/1b45A_1dfnA_no.txt
+<condapython> drp-clusters/drpclusters/align_disulfides.py -f 1b45A -s 1hjeA -p drpPdb -o disulfideWork/1b45A_1dfnA_no.txt
+<condapython> drp-clusters/drpclusters/align_disulfides.py -f 1dfnA -s 1hjeA -p drpPdb -o disulfideWork/1b45A_1dfnA_no.txt
 ```
 
 After all individual pairwise distance files have been generated, merge them into a final set of files with the following:
@@ -116,7 +118,8 @@ The cluster pipeline performs the following steps:
 * Filters input DRPs by 100% sequence and structure identity
 * Clusters input DRPs by native overlap
 * Reclusters DRPs that have the Knottin SCOP fold by equivalent disulfide bond distance
-* Reassigns longer singletons to more populated clustes
+* Reassigns longer singletons to more populated clusters
+* Reassigns shorter singletons to more populated clusters
 
 These steps are performed using the distance matrices created above as input.
 
@@ -134,7 +137,7 @@ The clustering cutoffs in this example (specified by the `-c`, `-t`, `-k`, `-v`,
 
 The `drp_lengths.txt` file was created in step 2 above.
 
-This step should take a few seconds on the example input.
+This step should take a few seconds on the example input. Note that due to the small size of this dataset, the shorter singleton step won't find any such DRPs.
 
 ### 5. Create Visualization Sessions
 After the clusters have been created, an optional post-processing step can be run to align all DRPs in each cluster to their respective centroid. This step writes out the aligned PDB coordinates of each DRP for easy viewing in a visualization session.
@@ -148,11 +151,12 @@ In this example, the `-i` paramater value specifies which clusters to process an
 
 This step should take about a minute on the example input.
 
-### 6. Cluster Text annotation (coming soon)
+### 6. Cluster Text annotation
+The step of annotating clusters and outputting a table with details on each cluster and DRP was performed in the original analysis. If there is suitable interest it can be added here.
 
 
 ## Running Tests
-A handful of unit and integration tests are provided in this package, using the python `unittest` framework. These tests have high overlap with the example above (although do not run the full all-vs-all DRP alignment steps).
+A handful of unit and integration tests are provided in this package, using the Python `unittest` framework. These tests have high overlap with the example above (although do not run the full all-vs-all DRP alignment steps).
 
 Similar to the example, running the full set of tests requires access to MODELLER libraries. If you don't have access, you can still run a subset of these tests.
 
@@ -161,7 +165,7 @@ If MODELLER is installed using the Ana/Miniconda framework, the tests access the
 
 `export CONDA=path/to/conda/python`
 
-This reverts to your system's default Python executable if the `$CONDA` variable isn't set.
+This reverts to your system's default Python executable if the `CONDA` variable isn't set.
 
 While not required, the [nose library](https://nose.readthedocs.io/en/latest/) is the best way to run tests.
 
@@ -178,10 +182,10 @@ nosetests -a type=integration --nocapture --nologcapture
 
 These run the `test_drp_clusters.py` test suite. The `-a type=unit` flag runs the basic cluster pipeline and doesn't require MODELLER access (step 4 above). The `-a type=integration` flag runs the other components (steps 2, 3, and 5 above) and does require MODELLER. Omitting these flags runs all tests in the suite.
 
-If you don't use nose, you can run all tests at once with `python test_drp_clusters.py`. 
+If you don't use `nose`, you can run all tests at once with `python test_drp_clusters.py`. 
 
 ### Tips
-The tests automatically delete the temporary directories upon completion. To retain them (for example, if you want to look at the output files), comment out the tearDown method in `test_drp_clusters.py`.
+The tests automatically delete the temporary directories upon completion. To retain them (for example, if you want to look at the output files), comment out the two `tearDown()` methods in `test_drp_clusters.py`.
 
 ## License
 

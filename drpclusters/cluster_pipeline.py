@@ -13,6 +13,8 @@ import itertools
 import cluster_lib
 from operator import itemgetter
 
+logger = logging.getLogger('cluster_pipeline')
+logger.setLevel(logging.DEBUG)
 
 class ClusterPipelineRunner(cluster_lib.Runner):
     def __init__(self, config):
@@ -22,22 +24,22 @@ class ClusterPipelineRunner(cluster_lib.Runner):
 
     def execute(self):
 
-        print "Begin step filter sequence"
+        logger.info("Begin step Filter Sequences")
         self.filterSequences()
 
-        print "\nBegin step cluster native overlap"
+        logger.info("Begin step Cluster Native Overlap")
         self.clusterNativeOverlap()
 
-        print "\nBegin step make knottin cluster subset"
+        logger.info("Begin step Knottin Reclustering")
         self.makeKnottinClusterSubset()
 
-        print "\nBegin step merge knottin clusters"
+        logger.info("Begin step Merge Knottin Clusters")
         self.mergeKnottinClusters()
 
-        print "\nBegin step longer singletons"
+        logger.info("Begin step Process Longer Singletons")
         self.processLongerFractionSingletons()
 
-        print "\nBegin step shorter singletons"
+        logger.info("Begin step Process Shorter Singletons")
         self.processShorterFractionSingletons()
 
     """
@@ -49,27 +51,24 @@ class ClusterPipelineRunner(cluster_lib.Runner):
     4. Recluster knottin clusters by the amount their disulfide bonds overlap to consolidate them
     5. Merge the knottin clusters with the non-knottin clusters
     6. Consolidate clusters further by processing 'longer fraction' singletons
-    7. Consolidate even furthre by processing 'shorter fraction' singletons
+    7. Consolidate even further by processing 'shorter fraction' singletons
     
     These steps are called by an executable (i.e. ../bin/runFullClusterPipeline.py). At any step, the results of
     the previous clustering step can be read in from a file (i.e., 'readPreviousFilterClusters'). All clusters 
     are handled as DrpClusterSets and can be compared to previous runs using self.compareToPreviousClusters()
     """
 
-    #DELETE
     def readShorterFractionDistanceFile(self):
         if (self.shorterFractionDm is None):
             distanceFile = self.config.shorter_fraction_distance_file
             self.shorterFractionDm = self.readDistanceFile(distanceFile)
         return self.shorterFractionDm
 
-    #DELETE
     def readNativeOverlapDistanceFile(self):
         if (not self.nativeOverlapDm):
             distanceFile = self.config.native_overlap_distance_file
             self.nativeOverlapDm = self.readDistanceFile(distanceFile)
         return self.nativeOverlapDm
-
     
     def readDisulfideDistances(self):
         disulfideDistanceMatrix = cluster_lib.DisulfideDrpDistanceMatrix()
@@ -81,7 +80,6 @@ class ClusterPipelineRunner(cluster_lib.Runner):
         distanceMatrix.readFile(distanceFile)
         return distanceMatrix
 
-    #DELETE
     def createUnfilteredDrpList(self):
         """Read the results of the PDB query that obtained all DRPs. The current parameters are all solved structures
         between 1 and 50 residues and 1-4 disulfide bonds
@@ -95,8 +93,7 @@ class ClusterPipelineRunner(cluster_lib.Runner):
         """Filter DRPs by 100% sequence and structure identity"""
         filteredSeqsDistances = self.readDistanceFile(self.config.filter_seqs_distance_file)
 
-        reader = cluster_lib.PtFileReader(self.config.drp_query_file)
-        drpList = [cluster_lib.Drp(x) for x in reader.getLines()]
+        drpList = [cluster_lib.Drp(x) for x in cluster_lib.readDrpCodeFile(self.config.drp_query_file)]
         
         ldc = cluster_lib.LargerDistanceComparer(self.config.filtering_cutoff)
         
@@ -105,6 +102,8 @@ class ClusterPipelineRunner(cluster_lib.Runner):
         self.filteredDrps = self.getFilteredClusterRepresentatives(self.filteredClusterSet)
 
         self.filteredClusterSet.writeClusterMemberFile(self.getFullOutputFile("filterSequences_cluster_members.txt"))
+
+        logger.info("Done step Filter Sequences; clustered %s DRPs into %s clusters\n" % (len(drpList), self.filteredClusterSet.getClusterCount()))
 
     def clusterDrps(self, drpList, distanceMatrix, comparer, clusterOrder=None):
         """Run the main hierarchical clustering step.
@@ -159,6 +158,8 @@ class ClusterPipelineRunner(cluster_lib.Runner):
         self.nativeOverlapClusterSet.renumberBySize()
 
         self.nativeOverlapClusterSet.writeClusterMemberFile(self.getFullOutputFile("nativeOverlap_cluster_members.txt"))
+
+        logger.info("Done step Cluster Native Overlap; clustered %s DRPs into %s clusters\n" % (len(self.filteredDrps), self.nativeOverlapClusterSet.getClusterCount()))
         
     def identifyKnottinClusters(self):
         """Return the list of cluster indexes for clusters primarily made up of Knottins as annotated by SCOP"""
@@ -219,6 +220,8 @@ class ClusterPipelineRunner(cluster_lib.Runner):
         self.knottinClusterSet.renumberBySize()
         self.knottinClusterSet.writeClusterMemberFile(self.getFullOutputFile("clusterKnottins_cluster_members.txt"))
 
+        logger.info("Done step Knottin Reclustering; clustered %s Knottin DRPs into %s clusters\n" % (len(knottinList), self.knottinClusterSet.getClusterCount()))
+
     def mergeKnottinClusters(self):
         """Merge clusters in self.nativeOverlapClusterSet not containing knottins with clusters in self.knottinClusterSet
         and renumber them by size
@@ -234,6 +237,8 @@ class ClusterPipelineRunner(cluster_lib.Runner):
         self.mergedClusterSet.renumberBySize()
 
         self.mergedClusterSet.writeClusterMemberFile(self.getFullOutputFile("mergeKnottins_cluster_members.txt"))
+
+        logger.info("Done step Merge Knottin Clusters; final merged set has %s clusters\n" % self.mergedClusterSet.getClusterCount())
 
     def processTopClusterOrder(self, topClusterSet, paramFileName):
         """Return the order in which DRPs will be considered as the reference DRPs for singletons"""
@@ -259,13 +264,17 @@ class ClusterPipelineRunner(cluster_lib.Runner):
         
         self.longerSingletonClusterSet.writeSingletonFile(self.getFullOutputFile("processLongerSingletons_singleton_pairs.txt"), 'longer')
 
+        logger.info("Done step Process Longer Singletons; updated cluster set has %s clusters\n" % self.longerSingletonClusterSet.getClusterCount())
+
     def addSingletonsToClusters(self, inputClusterSet):
         """Remove the DRPs newly identified as singletons from their current clusters and add each to the cluster
         containing its reference DRP.
         """
+        
         [topClusterSet, bottomClusterSet] = self.divideClusters(inputClusterSet)
-        newClusterSet = cluster_lib.DrpClusterSet()
 
+        newClusterSet = cluster_lib.DrpClusterSet()
+        
         #process bottom clusters
         for cluster in bottomClusterSet.getClusterList():
             newCluster = cluster_lib.DrpCluster(cluster.getClusterIndex())
@@ -311,8 +320,10 @@ class ClusterPipelineRunner(cluster_lib.Runner):
 
         self.shorterSingletonClusterSet.writeClusterMemberFile(self.getFullOutputFile("processShorterSingletons_cluster_members.txt"))
 
+        logger.info("Done step Process Shorter Singletons; updated cluster set has %s clusters\n" % self.shorterSingletonClusterSet.getClusterCount())        
+        
         for nextCluster in sorted(self.shorterSingletonClusterSet.getClusterList(), key=lambda x: len(x.getMemberList()), reverse=True):
-            print "cluster %s length %s" % (nextCluster.getClusterIndex(), len(nextCluster.getMemberList()))
+            logger.info("Final cluster %s size: %s" % (nextCluster.getClusterIndex(), len(nextCluster.getMemberList())))
 
         self.shorterSingletonClusterSet.writeSingletonFile(self.getFullOutputFile("processShorterSingletons_singleton_pairs.txt"), 'shorter')
 
@@ -331,32 +342,66 @@ class ClusterPipelineRunner(cluster_lib.Runner):
                 bottomClusterSet.addCluster(nextCluster)
         return [topClusterSet, bottomClusterSet]
 
-def getParser():
-    parser = argparse.ArgumentParser()
+    def makeLogPrefix(self):
+        return 'clusterPipeline'
     
-    parser.add_argument("-r", "--run_directory", help="Directory to which output is written. Will be created if does not exists", required=True)
-    parser.add_argument("-q", "--drp_query_file", help="Text file with input set of DRPs. One DRP per line, specified as a DRP code (5 characters; first 4 are PDB ID and 5th is chain, eg 1zdcA)", required=True)
-    parser.add_argument("-f", "--filter_seqs_distance_file", help="Distance matrix for similarity product filtering (see documentation accompanying publication for details on creating this file)", required=True)
-    parser.add_argument("-n", "--native_overlap_distance_file", help="Distance matrix for native overlap clustering (see documentation accompanying publication for details on creating this file)", required=True)
-    parser.add_argument("-d", "--disulfide_distance_file", help="Distance matrix for knottin reclustering (see documentation accompanying publication for details on creating this file)", required=True)
-    parser.add_argument("-s", "--shorter_fraction_distance_file", help="Distance matrix for shorter singleton postprocessing step (see documentation accompanying publication for details on creating this file)", required=True)
-    parser.add_argument("-c", "--filtering_cutoff", help="Cutoff for the initial filtering step (recommended to set to 99 to filter identical DRPs", required=True, default=99)
-    parser.add_argument("-k", "--knottin_disulfide_cutoff", help="Cutoff for Knottin reclustering step in Angstroms", required=True, default=2.0)
-    parser.add_argument("-t", "--native_overlap_cutoff", help="Cutoff for the initial native overlap clustering step", required=True, default=0.70)
-    parser.add_argument("-v", "--knottin_cutoff_fraction", help="Fraction of DRPs in a cluster annotated as Knottins by SCOP for it to be considered a 'knottin' cluster and thus be reclustered in the disulfide overlap step (cluster must also pass knottin_cutoff_absolute filter)", required=True, default=.01)
-    parser.add_argument("-b", "--knottin_cutoff_absolute",  help="Number of DRPs in a cluster annotated as Knottins by SCOP for it to be considered a 'knottin' cluster and thus be reclustered in the disulfide overlap step (cluster must also pass knottin_cutoff_fraction filter)", required=True, default=4)
-    parser.add_argument("-l", "--top_cluster_count", required=True, default=25, help="In the singleton steps for the pipeline, DRPs in the top N clusters sorted by size are set as references for DRPs not in those clusters. Use this to set N")
-    parser.add_argument("-g", "--singleton_cutoff", required=True, default=0.7, help="In the singleton steps for the pipeline, DRPs are added from the smaller clusters to larger clusters if they are within this cutoff. Recommend to be identical to native_overlap_cutoff")
-    parser.add_argument("-e", "--drp_length_file", required=True, help="tab-delimited file of DRP codes to sequence lengths")
-    parser.add_argument("-p", "--scop_file", required=True, help="SCOP fold file, format identical to http://scop.mrc-lmb.cam.ac.uk/scop/parse/dir.des.scop.txt_1.75")
+def getParser():
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description="Run the DRP clustering protocol. All distance matrix files are created in upstream steps (pairwise_align and friends).")
+    
+    parser.add_argument("-r", dest="run_directory", metavar='<dir>', required=True,
+                        help="Directory to which output is written. Will be created if does not exist\n\n")
+    
+    parser.add_argument("-q", dest="drp_query_file", metavar='<file>',
+                        help="Text file with input set of DRPs. One DRP per line, specified as a DRP code\n"
+                        "(5 characters; first 4 are PDB ID and 5th is chain, eg 1zdcA)\n\n", required=True)
+    
+    parser.add_argument("-f", dest="filter_seqs_distance_file", metavar='<file>', required=True,
+                        help="Distance matrix for similarity product filtering\n\n")
+
+    parser.add_argument("-n", dest="native_overlap_distance_file", metavar='<file>', required=True,
+                        help="Distance matrix for native overlap clustering\n\n")
+    
+    parser.add_argument("-d", dest="disulfide_distance_file", metavar='<file>', required=True,
+                        help="Distance matrix for knottin reclustering\n\n")
+    
+    parser.add_argument("-s", dest="shorter_fraction_distance_file", metavar='<file>', required=True,
+                        help="Distance matrix for shorter singleton postprocessing step\n\n")
+    
+    parser.add_argument("-c", dest="filtering_cutoff", metavar='<float>', default=99,
+                        help="Cutoff for the initial filtering step (recommended to set to 99 (default) to filter identical DRPs\n\n")
+    
+    parser.add_argument("-k", dest="knottin_disulfide_cutoff", metavar='<float>', default=2.0,
+                        help="Cutoff for Knottin reclustering step in Angstroms (default 2.0)\n\n")
+    
+    parser.add_argument("-t", dest="native_overlap_cutoff", metavar='<float>', default=0.70,
+                        help="Cutoff for the initial native overlap clustering step (default 0.70)\n\n")
+    
+    parser.add_argument("-v", dest="knottin_cutoff_fraction", metavar='<float>', default=.01,
+                        help="Fraction of DRPs in a cluster annotated as Knottins by SCOP for it to be considered a 'knottin' cluster\n"
+                        "and thus be reclustered in the disulfide overlap step (default 0.1; cluster must also pass knottin_cutoff_absolute filter)\n\n")
+    
+    parser.add_argument("-b", dest="knottin_cutoff_absolute",  metavar='<int>', default=4,
+                        help="Number of DRPs in a cluster annotated as Knottins by SCOP for it to be considered a 'knottin' cluster\n"
+                        "and thus be reclustered in the disulfide overlap step (default 4; cluster must also pass knottin_cutoff_fraction filter)\n\n")
+    
+    parser.add_argument("-l", dest="top_cluster_count",  default=25, metavar='<int>',
+                        help="In the singleton steps for the pipeline, DRPs in the top N clusters sorted by size are\n"
+                        "set as references for DRPs not in those clusters. Use this to set N. Default 25\n\n")
+
+    parser.add_argument("-g", dest="singleton_cutoff", default=0.7, metavar='<float>',
+                        help="In the singleton steps for the pipeline, DRPs are added from the smaller clusters to larger clusters\n"
+                        "if they are within this cutoff. Recommend to be identical to native_overlap_cutoff. Default 0.7\n\n")
+
+    parser.add_argument("-e", dest="drp_length_file", required=True, metavar='<file>',
+                        help="tab-delimited file of DRP codes to sequence lengths (output by previous step setup_pdb.py)\n\n")
+
+    parser.add_argument("-p", dest="scop_file", metavar='<file>', required=True,
+                        help="SCOP fold file, format identical to http://scop.mrc-lmb.cam.ac.uk/scop/parse/dir.des.scop.txt_1.75\n\n")
     return parser
 
 if __name__ == '__main__':
 
     parser = getParser()
-    if (len(sys.argv) < 2):
-        print "Please run with '-h' for full usage"
-        sys.exit()
     config = parser.parse_args(sys.argv[1:])
 
     runner = ClusterPipelineRunner(config)
