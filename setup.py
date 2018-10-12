@@ -6,7 +6,7 @@ import os
 import sys
 
 setup(name='drpclusters',
-      version='1.1.0',
+      version='1.1.1',
       description='Structural clustering of disulfide-rich peptides',
       url='https://github.com/dbarkan/drp-clusters/',
       author='Dave Barkan',
